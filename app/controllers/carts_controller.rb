@@ -7,19 +7,19 @@ class CartsController < ApplicationController
 		render json: { message: "Please enter valid dish id.." }
 	end
 
-	def index
+	def show
 		cart = @current_customer.carts.all
 		return render json: cart unless cart.empty?
-		render json: { error: "Cart is empty" }
+		render json: { error: "Order history is empty" }
 	end
 
-	def search_by_id
+	def order_id
 		order = Cart.where(order_id: params[:order_id])
 		return render json: order unless order.empty?
 		render json: { error:"Order not found" }
 	end
 
-	def destroy_cart
+	def destroy
 		cart =@current_customer.carts.find_by(id: params[:id])
 		return render json: {message: "Order deleted from order history"} if cart.destroy 
 		render json: { errors: cart.errors.full_messages }
