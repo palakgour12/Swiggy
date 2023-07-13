@@ -4,7 +4,7 @@ class CartsController < ApplicationController
 	def create
 		cart = @current_customer.carts.new(set_params)                  
 		return render json: {message: "#{@current_customer.name} your order has been placed successfully..."} if cart.save
-		render json: { message: "Cant place the order" }
+		render json: { message: "Please enter valid dish id.." }
 	end
 
 	def index
