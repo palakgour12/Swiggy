@@ -2,14 +2,14 @@ class CartsController < ApplicationController
 	skip_before_action :authenticate_request
 
 	def create
-		cart = @current_customer.carts.new(set_params)                  
-		return render json: {message: "#{@current_customer.name} your order has been placed successfully..."} if cart.save
+		order = @current_customer.carts.new(set_params)                  
+		return render json: { message: "#{@current_customer.name } your order has been placed successfully..."} if order.save
 		render json: { message: "Please enter valid dish id.." }
 	end
 
 	def show
-		cart = @current_customer.carts.all
-		return render json: cart unless cart.empty?
+		orders = @current_customer.carts.all
+		return render json: orders unless orders.empty?
 		render json: { error: "Order history is empty" }
 	end
 
@@ -20,9 +20,9 @@ class CartsController < ApplicationController
 	end
 
 	def destroy
-		cart =@current_customer.carts.find_by(id: params[:id])
-		return render json: {message: "Order deleted from order history"} if cart.destroy 
-		render json: { errors: cart.errors.full_messages }
+		order =@current_customer.carts.find_by(id: params[:id])
+		return render json: {message: "Order deleted from order history"} if order.destroy 
+		render json: { errors: order.errors.full_messages }
 		rescue NoMethodError
 		render json: { message: "ID not found.." }
 	end

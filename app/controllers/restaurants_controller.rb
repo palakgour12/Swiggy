@@ -3,25 +3,21 @@ class RestaurantsController < ApplicationController
   skip_before_action :authenticate_customer
   
   def create
-    add_hotel= @current_user.build_restaurant(set_params)
-    return  render json: add_hotel if add_hotel.save
-    render json: add_hotel.errors.full_messages
+    hotel= @current_user.build_restaurant(set_params)
+    return  render json: hotel if hotel.save
+    render json: hotel.errors.full_messages
   end
 
   def update
-    hotel =@current_user.restaurant
+    hotel = @current_user.restaurant
     return render json: {message: " Updated successfully!!", data:hotel} if hotel.update(set_params)    
     render json: {errors: hotel.errors.full_messages}
-    rescue NoMethodError
-    render json: {message: "ID not found.."}
   end
 
   def destroy
-    hotel =@current_user.restaurant
+    hotel = @current_user.restaurant
     return render json: {message: " Restaurant deleted!!", data:hotel}  if hotel.destroy    
     render json: {errors: hotel.errors.full_messages}
-    rescue NoMethodError
-    render json: {message: "ID not found.."}
   end
 
   def status

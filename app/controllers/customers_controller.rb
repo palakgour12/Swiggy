@@ -3,16 +3,16 @@ class CustomersController < ApplicationController
   skip_before_action :authenticate_request
 
   def create
-    sign_in=Customer.new(set_params)
+    sign_in = Customer.new(set_params)
     return  render json: sign_in if sign_in.save
     render json: sign_in.errors.full_messages
   end
 
   def login
-    login_data =Customer.find_by(email: params[:email],password: params[:password])
-    if login_data
-      token = jwt_encode(customer_id: login_data.id)
-      render json: {message:"#{login_data.name} logged in successfully",token: token}, status: :ok
+    login = Customer.find_by(email: params[:email],password: params[:password])
+    if login
+      token = jwt_encode(customer_id: login.id)
+      render json: {message:"#{login.name} logged in successfully",token: token}, status: :ok
     else
       render json: {error: "Invalid email or password.."}
     end
@@ -22,8 +22,8 @@ class CustomersController < ApplicationController
     if params[:dish].strip.empty? 
       render json: {message: "Enter dish and restaurant name.. "}
     else
-      hotel=Restaurant.find_by("name like ?","%"+params[:hotel_name].strip+"%")
-      dish=Dish.where("name like '%#{params[:dish].strip}%' AND restaurant_id = #{hotel.id} ")
+      hotel = Restaurant.find_by("name like ?","%"+params[:hotel_name].strip+"%")
+      dish = Dish.where("name like '%#{params[:dish].strip}%' AND restaurant_id = #{hotel.id} ")
       return render json: dish unless dish.empty?
       render json: {error: "Enter valid dish and restaurant.."}
     end
@@ -32,20 +32,18 @@ class CustomersController < ApplicationController
   end
 
   def search_category
-    unless params[:category].strip.empty?|| params[:category].blank? && params[:hotel_name].strip.empty? || params[:hotel_name].blank?
-      @check =  Category.find_by("name like '%#{params[:category].strip}%'")
-      @rest= Restaurant.find_by("name like '%#{params[:hotel_name].strip}%'")
-      @dish = Dish.find_by(category_id: @check.id, restaurant_id: @rest.id)
-      array=[]
-      array<<@rest.name
-      array<<@check.name 
-      array<<@dish.name
-      render json: {data: array}, status: :ok
-    else 
-      render json: {error: "Please enter valid category and restaurant..."}
-    end
-    rescue NoMethodError
-    render json: {message: "Please enter valid category and restaurant..."}       
+    category_name = params[:category].strip if params[:category]
+    hotel_name=params[:hotel_name].strip if params[:hotel_name]
+    return  render json: {error: "Please enter valid category and restaurant..."} if category_name.blank?|| params[:hotel_name].blank?
+    category =  Category.find_by("name like ?","%#{category_name}%")
+    restaurant= Restaurant.find_by("name like ?","%#{hotel_name}%")
+      return render json:  {error: "Please enter valid category and restaurant..."} if category.nil? || restaurant.nil?
+      dish = Dish.find_by(category_id: category.id, restaurant_id: restaurant.id)
+      if dish.nil?
+        render json: {message: "No dish found..."}
+      else 
+        render json: {data: [restaurant.name,category.name,dish.name]}, status: :ok 
+      end
   end
   
   def update
@@ -64,5 +62,6 @@ class CustomersController < ApplicationController
   def set_params
     params.permit(:name,:email,:password)
   end 
+
 
 end

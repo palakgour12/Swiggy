@@ -2,21 +2,18 @@ class DishesController < ApplicationController
   before_action :authenticate_request
   skip_before_action :authenticate_customer
   def create
-    if params[:category].empty? || params[:category].blank?
+      if params[:category].present?
+        category = Category.find_by("name like ? ","%"+params[:category]+"%")
+        dish = @current_user.restaurant.dishes.new((set_params).merge(category_id: category.id))
+        return  render json: dish if dish.save
+        render json: dish.errors.full_messages
+    else
       render json: {error: "Fields cant be blank.."}
-    else  
-      category=Category.find_by("name like ? ","%"+params[:category]+"%")
-      dish=@current_user.restaurant.dishes.new((set_params).merge(category_id: category.id))
-      dish.image.attach(params[:image])
-      return  render json: dish if dish.save
-      render json: dish.errors.full_messages
     end
-    rescue NoMethodError
-    render json: {error: "Fields cant be blank.."}
   end
   
   def update
-    dish =@current_user.restaurant.dishes.find_by(id: params[:id])
+    dish = @current_user.restaurant.dishes.find_by(id: params[:id])
     return  render json: dish if dish.update(set_params)
     render json: {errors: dish.errors.full_messages}
     rescue NoMethodError
@@ -24,7 +21,7 @@ class DishesController < ApplicationController
   end
 
   def destroy
-    dish =@current_user.restaurant.dishes.find_by(id: params[:id])
+    dish = @current_user.restaurant.dishes.find_by(id: params[:id])
     return render json: dish if dish.destroy 
     render json: {errors: dish.errors.full_messages}
     rescue NoMethodError
@@ -41,8 +38,8 @@ class DishesController < ApplicationController
 
   def search_namewise  
     return  render json: {error: "Enter any dish name.."} unless params[:dish].present?                                 
-    a=@current_user.restaurant
-    dish=Dish.where("name like ? AND restaurant_id = ? ", "%"+params[:dish].strip+"%", a.id)
+    hotel = @current_user.restaurant
+    dish = Dish.where("name like ? AND restaurant_id = ? ", "%"+params[:dish].strip+"%", hotel.id)
       return  render json: dish unless dish.empty?
       render json: {error: "Dish not found..."} 
   end
@@ -51,7 +48,7 @@ class DishesController < ApplicationController
     return  render json: {error: "Field cant be blank..."} unless params[:category].present?
     name= params[:category].strip
     @check = Category.find_by("name like ? ","%#{name}%")
-    @rest=@current_user.restaurant 
+    @rest = @current_user.restaurant 
     dish = Dish.where(category_id: @check.id, restaurant_id: @rest.id)
     unless dish.empty?
     render json: dish
@@ -62,13 +59,17 @@ class DishesController < ApplicationController
     render json: {error: "Category is invalid..."}
   end  
 
-  def show #all 
-    dish=@current_user.restaurant.dishes
-    return render json: dish unless dish.empty?
+def show #all 
+  restaurant = @current_user.restaurant
+  if restaurant.nil?
+    render json:{error: "Please add restaurant first.."}
+  else
+    return render json: restaurant.dishes unless restaurant.dishes.empty?
     render json: {message: "No Dish available"}
-  end 
+  end
+end 
 
-  private
+private
   def set_params
     params.permit(:name ,:price ,:image)
   end 
