@@ -14,11 +14,12 @@ Rails.application.routes.draw do
   get '/search_dwn', to: "dishes#search_namewise"
   get '/search_categorywise' ,to: "dishes#search_categorywise"
   get '/search_by_id' ,to: "dishes#search_by_id"
+  get '/search_dish', to: "dishes#search_dish"
+  get '/search_category', to: "dishes#search_category"
   resource :dishes
   
   #..............customer...........................
-  get '/search_dish', to: "customers#search_dish"
-  get '/search_category', to: "customers#search_category"
+  
   post 'customer/login' ,to: "customers#login"
   resource :customers
 

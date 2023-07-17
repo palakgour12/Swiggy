@@ -2,6 +2,7 @@ class Cart < ApplicationRecord
   belongs_to :user
   belongs_to :dish
   before_save :order
+  has_many :orders
 
   validates :dish_id,presence: true
 
