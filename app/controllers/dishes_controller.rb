@@ -18,15 +18,11 @@ class DishesController < ApplicationController
   def update
     return  render json: @dish if @dish.update(set_params)
     render json: {errors: @dish.errors.full_messages}
-    rescue NoMethodError
-    render json: {message: "Enter valid dish id.."}
   end
 
   def destroy
     return render json: {message: "dish removed from menu.."} if @dish.destroy 
     render json: {errors: @dish.errors.full_messages}
-    rescue NoMethodError
-    render json: {message: "Enter valid dish id.."}
   end
 
   def search_by_id 
@@ -35,8 +31,8 @@ class DishesController < ApplicationController
 
   def search_namewise  
     return  render json: {error: "Enter any dish name.."} unless params[:dish].present?                                 
-    hotel = @current_user.restaurant
-    dish = Dish.where("name like ? AND restaurant_id = ? ", "%"+params[:dish].strip+"%", hotel.id)
+    restaurant = @current_user.restaurant
+    dish = Dish.where("name like ? AND restaurant_id = ? ", "%"+params[:dish].strip+"%", restaurant.id)
       return  render json: dish unless dish.empty?
       render json: {error: "Dish not found..."} 
       rescue NoMethodError
@@ -70,22 +66,22 @@ class DishesController < ApplicationController
     end
   end
 
-def search_category
-  category = Category.where("name like ?","%#{params[:category]}%")
-  render json: category
-end
-  
-def show #all 
-  restaurant = @current_user.restaurant
-  if restaurant.nil?
-    render json:{error: "Please add restaurant first.."}
-  else
-    return render json: restaurant.dishes unless restaurant.dishes.empty?
-    render json: {message: "No Dish available"}
+  def search_category
+    category = Category.where("name like ?","%#{params[:category]}%")
+    render json: category
   end
-end 
- 
-private
+    
+  def show #all 
+    restaurant = @current_user.restaurant
+    if restaurant.nil?
+      render json:{error: "Please add restaurant first.."}
+    else
+      return render json: restaurant.dishes unless restaurant.dishes.empty?
+      render json: {message: "No Dish available"}
+    end
+  end 
+   
+  private
   def set_params
     params.permit(:name ,:price ,:image)
   end 

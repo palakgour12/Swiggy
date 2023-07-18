@@ -34,9 +34,9 @@ class RestaurantsController < ApplicationController
 
   def search
     if params[:status].present?
-      search_by_status()
+      search_by_status
     elsif params[:name].present?
-      search_by_restaurant_name()
+      search_by_restaurant_name
     else
       render json: Restaurant.all
     end

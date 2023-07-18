@@ -18,7 +18,7 @@ class CartsController < ApplicationController
 	def search_by_order_id
 		order = @current_user.carts.find_by(order_id: params[:order_id])
 		return render json: order if order.present?
-		render json: { error:"Order id is wrong" }
+		render json: { error:"No Order found..." }
 	end
 
 	def destroy
