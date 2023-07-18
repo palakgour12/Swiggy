@@ -5,8 +5,7 @@ Rails.application.routes.draw do
   resource :owners
 
   #............restaurant..........................
-  get '/status' ,to: "restaurants#status"
-  get '/search_restaurant' ,to: "restaurants#search_restaurant"
+  get '/search' ,to: "restaurants#search"
   resource :restaurants
   
   #............dish................................
@@ -24,7 +23,7 @@ Rails.application.routes.draw do
   resource :customers
 
   #................cart..........................
-  get '/order_id', to: 'carts#order_id'
+  get '/search_by_order_id', to: 'carts#search_by_order_id'
   resource :carts
 
 end

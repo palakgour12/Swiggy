@@ -2,6 +2,7 @@ class CustomersController < ApplicationController
   skip_before_action :authenticate_request, only: [:create,:login]
   skip_before_action :owner_check
   before_action :customer_check , only: [:update, :destroy]
+  before_action :find_customer , only: [:update, :destroy, :show]
 
   def create
     sign_in = User.new(set_params)
@@ -20,19 +21,28 @@ class CustomersController < ApplicationController
   end
 
   def update
-    customer = @current_user
-    return  render json: {message: " Updated successfully!!", data:customer}  if customer.update(set_params)     
-    render json: {errors: customer.errors.full_messages}
+    return  render json: {message: " Updated successfully!!", data:@customer}  if @customer.update(set_params)     
+    render json: {errors: @customer.errors.full_messages}
   end
   
   def destroy
-    customer = @current_user
-    return  render json: { message: "Your account has been deleted" } if customer.destroy
-    render json: { errors: customer.errors.full_messages }
+    return  render json: { message: "Your account has been deleted" } if @customer.destroy
+    render json: { errors: @customer.errors.full_messages }
+  end
+
+   def show
+    render json: @customer
   end
   
   private
   def set_params
     params.permit(:name,:email,:password,:type)
   end 
+
+
+  def find_customer
+    @customer = @current_user
+    return @customer
+  end
+
  end

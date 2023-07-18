@@ -2,6 +2,7 @@ class RestaurantsController < ApplicationController
   before_action :authenticate_request 
   before_action :owner_check ,only: [:create,:update,:destroy]
   before_action :customer_check ,except: [:create,:update,:destroy]
+  before_action :find_restaurant ,only: [:update, :destroy]
   
   def create
     restaurant = @current_user.build_restaurant(set_params)
@@ -10,33 +11,35 @@ class RestaurantsController < ApplicationController
   end
 
   def update
-    restaurant = @current_user.restaurant
-    return render json: {message: " Updated successfully!!", data:restaurant} if restaurant.update(set_params)    
-    render json: {errors: restaurant.errors.full_messages}
+    return render json: {message: " Updated successfully!!", data:@restaurant} if @restaurant.update(set_params)    
+    render json: {errors: @restaurant.errors.full_messages}
   end
 
   def destroy
-    restaurant = @current_user.restaurant
-    return render json: {message: " Restaurant deleted!!", data:restaurant}  if restaurant.destroy    
-    render json: {errors: restaurant.errors.full_messages}
+    return render json: {message: " Restaurant deleted!!", data:@restaurant}  if @restaurant.destroy    
+    render json: {errors: @restaurant.errors.full_messages}
   end
 
-  def status
-    return render json: {error: "Please enter status.."}  unless params[:status].present?
+  def search_by_status
     restaurant = Restaurant.where(status: params[:status])
-      return render json: restaurant unless restaurant.empty? 
-      render json: {error: "No Restaurant available... "}
+    return render json: restaurant unless restaurant.empty? 
+    render json: {error: "No Restaurant available... "}
   end
 
-  def search_restaurant
-    if params[:name].present? 
-      name = params[:name].strip if params[:name]
-      restaurant = Restaurant.where("name like ?","%#{name}%")
-      return  render json: restaurant unless restaurant.empty?
-      render json: {error: "No such restaurant found... "}    
-    else    
-       render json: {error: "Enter any restaurant name.."}
-    end              
+  def search_by_restaurant_name
+    restaurant = Restaurant.where("name like ?","%"+params[:name].strip+"%")
+    return  render json: restaurant unless restaurant.empty?
+    render json: {error: "No such restaurant found... "}                
+  end
+
+  def search
+    if params[:status].present?
+      search_by_status()
+    elsif params[:name].present?
+      search_by_restaurant_name()
+    else
+      render json: Restaurant.all
+    end
   end
 
   def show
@@ -53,4 +56,8 @@ class RestaurantsController < ApplicationController
   def set_params
     params.permit(:name,:address,:status)
   end 
+
+  def find_restaurant
+    @restaurant = @current_user.restaurant
+  end
 end

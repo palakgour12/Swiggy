@@ -2,6 +2,7 @@ class DishesController < ApplicationController
   before_action :authenticate_request
   before_action :owner_check ,except: [:search_dish, :search_category]
   before_action :customer_check ,only: [:search_dish, :search_category]
+  before_action :find_dish_id ,only: [:update, :destroy, :search_by_id]
   
   def create
     if params[:category].present?
@@ -15,25 +16,21 @@ class DishesController < ApplicationController
   end
   
   def update
-    dish = @current_user.restaurant.dishes.find_by(id: params[:id])
-    return  render json: dish if dish.update(set_params)
-    render json: {errors: dish.errors.full_messages}
+    return  render json: @dish if @dish.update(set_params)
+    render json: {errors: @dish.errors.full_messages}
     rescue NoMethodError
     render json: {message: "Enter valid dish id.."}
   end
 
   def destroy
-    dish = @current_user.restaurant.dishes.find_by(id: params[:id])
-    return render json: dish if dish.destroy 
-    render json: {errors: dish.errors.full_messages}
+    return render json: {message: "dish removed from menu.."} if @dish.destroy 
+    render json: {errors: @dish.errors.full_messages}
     rescue NoMethodError
     render json: {message: "Enter valid dish id.."}
   end
 
-  def search_by_id #particular
-    dish = @current_user.restaurant.dishes.find_by_id params[:id]
-    return  render json: dish  if dish
-    render json: {message: "Please enter valid dish id"}
+  def search_by_id 
+    return  render json: @dish
   end
 
   def search_namewise  
@@ -42,49 +39,40 @@ class DishesController < ApplicationController
     dish = Dish.where("name like ? AND restaurant_id = ? ", "%"+params[:dish].strip+"%", hotel.id)
       return  render json: dish unless dish.empty?
       render json: {error: "Dish not found..."} 
+      rescue NoMethodError
+      render json: {message: "Enter valid dish name.."}
   end
 
-  def search_categorywise
+  def search_categorywise 
     return  render json: {error: "Field cant be blank..."} unless params[:category].present?
-    name= params[:category].strip
-    @check = Category.find_by("name like ? ","%#{name}%")
-    @rest = @current_user.restaurant 
-    dish = Dish.where(category_id: @check.id, restaurant_id: @rest.id)
-    unless dish.empty?
-    render json: dish
+    dishes = Dish.joins(:category).where("categories.name like ? ","%#{params[:category].strip}%") 
+    if dishes
+      result=[]
+      dishes.each do |dish|
+      restaurant = dish.restaurant
+        if restaurant.user_id == @current_user.id
+          result.append(dish)
+        end
+      end
+      render json: result
     else
-      render json: {error: "No dish found"}
+      render json: {error: "Dish not found..."}
     end
-    rescue NoMethodError
-    render json: {error: "Category is invalid..."}
   end  
 
   def search_dish #customer
-    if params[:dish].strip.empty? 
+    unless params[:dish].present? and params[:hotel_name].present?
       render json: {message: "Enter dish and restaurant name.. "}
     else
-      hotel = Restaurant.find_by("name like ?","%"+params[:hotel_name].strip+"%")
-      dish = Dish.where("name like '%#{params[:dish].strip}%' AND restaurant_id = #{hotel.id} ")
-      return render json: dish unless dish.empty?
+      dish = Dish.joins(:restaurant).where("restaurants.name like '%#{params[:hotel_name].strip}%' and dishes.name like '%#{params[:dish].strip}%'" )
+       return render json: dish unless dish.empty?
       render json: {error: "Enter valid dish and restaurant.."}
     end
-    rescue
-    render json: {error: "Invalid restaurant or dish.."} 
   end
 
-def search_category #customer***
-  category_name = params[:category].strip if params[:category]
-  hotel_name=params[:hotel_name].strip if params[:hotel_name]
-  return  render json: {error: "Please enter valid category and restaurant..."} if category_name.blank?|| hotel_name.blank?
-  category =  Category.find_by("name like ?","%#{category_name}%")
-  restaurant= Restaurant.find_by("name like ?","%#{hotel_name}%")
-  return render json:  {error: "Please enter valid category and restaurant..."} if category.nil? || restaurant.nil?
-  dish = Dish.find_by(category_id: category.id, restaurant_id: restaurant.id)
-  if dish.nil?
-    render json: {message: "No dish found..."}
-  else 
-    render json: {data: [restaurant.name,category.name,dish.name]}, status: :ok 
-  end
+def search_category
+  category = Category.where("name like ?","%#{params[:category]}%")
+  render json: category
 end
   
 def show #all 
@@ -101,4 +89,14 @@ private
   def set_params
     params.permit(:name ,:price ,:image)
   end 
+
+  def find_dish_id
+    @dish = @current_user.restaurant.dishes.find_by(id: params[:id])
+    unless @dish
+      render json: {error: "Enter valid dish id.."}
+    end
+    rescue NoMethodError
+    render json: {message: "Add restaurant first.."}
+  end
+
 end

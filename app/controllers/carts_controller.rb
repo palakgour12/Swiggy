@@ -15,9 +15,9 @@ class CartsController < ApplicationController
 		render json: { error: "Order history is empty" }
 	end
 
-	def order_id
-		order = Cart.where(order_id: params[:order_id])
-		return render json: order unless order.empty?
+	def search_by_order_id
+		order = @current_user.carts.find_by(order_id: params[:order_id])
+		return render json: order if order.present?
 		render json: { error:"Order id is wrong" }
 	end
 

@@ -2,6 +2,7 @@ class OwnersController < ApplicationController
   skip_before_action :authenticate_request, only: [:create,:login]
   skip_before_action :customer_check
   before_action :owner_check , only: [:update, :destroy]
+  before_action :find_owner , only: [:update, :destroy, :show]
 
   def create
     sign_in = User.new(set_params)
@@ -20,19 +21,26 @@ class OwnersController < ApplicationController
   end
 
   def update
-    owner = @current_user
-    return render json: {message: " Updated successfully!!", data:owner} if owner.update(set_params)
-    render json: {errors: owner.errors.full_messages}
+    return render json: {message: " Updated successfully!!", data:@owner} if @owner.update(set_params)
+    render json: {errors: @owner.errors.full_messages}
   end
   
   def destroy
-    owner = @current_user
-   return  render json: { message: "Your account has been deleted" }  if owner.destroy
-   render json: { errors: owner.errors.full_messages }
+    return  render json: { message: "Your account has been deleted" }  if @owner.destroy
+   render json: { errors: @owner.errors.full_messages }
+  end
+
+  def show
+    render json: @owner
   end
   
   private
   def set_params
     params.permit(:name,:email,:password,:type)
   end 
+
+  def find_owner
+    @owner = @current_user
+    return @owner
+  end
 end
