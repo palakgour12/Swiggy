@@ -30,7 +30,8 @@ class CartsController < ApplicationController
 	end
 
 	private
-	def set_params
+	def set_params 
+		
 		params.permit(:dish_id)
 	end
 
